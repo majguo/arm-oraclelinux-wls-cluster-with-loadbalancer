@@ -7,7 +7,7 @@
             "metadata": {
                 "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
             },
-            "defaultValue": "https://raw.githubusercontent.com/gnsuryan/wls-cluster-with-lb/master/"
+            "defaultValue": "https://raw.githubusercontent.com/wls-eng/arm-oraclelinux-wls-cluster-with-loadbalancer/master/"
         },
         "adminUsername": {
             "type": "string",
@@ -474,7 +474,7 @@
                 "autoUpgradeMinorVersion": true,
                 "settings": {
                     "fileUris": [
-                        "https://raw.githubusercontent.com/gnsuryan/wls-cluster-with-lb/master/setupClusterDomain.sh"
+                        "https://raw.githubusercontent.com/wls-eng/arm-oraclelinux-wls-cluster-with-loadbalancer/master/setupClusterDomain.sh"
                     ],
                     "commandToExecute": "[concat('sh setupClusterDomain.sh',' ',parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('wlsDomainName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ','admin',' ',variables('adminVMName'))]"
                 }
@@ -500,7 +500,7 @@
                 "autoUpgradeMinorVersion": true,
                 "settings": {
                     "fileUris": [
-                        "https://raw.githubusercontent.com/gnsuryan/wls-cluster-with-lb/master/setupClusterDomain.sh"
+                        "https://raw.githubusercontent.com/wls-eng/arm-oraclelinux-wls-cluster-with-loadbalancer/master/setupClusterDomain.sh"
                     ],
                     "commandToExecute": "[concat('sh setupClusterDomain.sh',' ',parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('wlsDomainName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',concat(parameters('managedServerPrefix'),copyIndex()),' ',variables('adminVMName'))]"
                 }
@@ -511,7 +511,22 @@
         "wlsDomainLocation": {
             "type": "string",
             "value": "[concat('/u01/domains/', parameters('wlsDomainName'))]"
+		},
+		"adminHostName": {
+			"type": "string",
+			"value": "[reference(concat(variables('adminVMName'),variables('publicIPAddressName'))).dnsSettings.fqdn]"
+		},
+		"adminConsole": {
+			"type": "string",
+			"value": "[concat('http://',reference(concat(variables('adminVMName'),variables('publicIPAddressName'))).dnsSettings.fqdn,':7001/console')]"
+		},
+		"adminSecuredConsole": {
+			"type": "string",
+			"value": "[concat('https://',reference(concat(variables('adminVMName'),variables('publicIPAddressName'))).dnsSettings.fqdn,':7002/console')]"
+        },
+        "loadBalancerURL": {
+			"type": "string",
+			"value": "[concat('http://',reference(parameters('LBPublicIPAddressName')).dnsSettings.fqdn,':8001')]"
         }
     }
 }
-
