@@ -158,6 +158,8 @@
         "availabilitySetName": "WLSCluster-AvailabilitySet",
         "adminAvailabilitySetName": "WLSAdmin-AvailabilitySet",
         "loadBalancerName": "ilb",
+        "loadBalancerFrontEndDefaultPort": 8001,
+        "loadBalancerFrontEndChannelPort": 8501,
         "lbID": "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))]",
         "publicLBIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('LBPublicIPAddressName'))]",
         "availabilitySetId": {
@@ -332,21 +334,49 @@
                             "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/probes/lbprobe')]"
                         },
                         "protocol": "Tcp",
-                        "frontendPort": 8001,
-                        "backendPort": 8001,
+                        "frontendPort": "[variables('loadBalancerFrontEndDefaultPort')]",
+                        "backendPort": "[variables('loadBalancerFrontEndDefaultPort')]",
                         "idleTimeoutInMinutes": 15,
                         "loadDistribution": "SourceIP"
                     },
                     "Name": "lbrule"
+                },
+                {
+                    "properties": {
+                        "frontendIPConfiguration": {
+                            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+                        },
+                        "backendAddressPool": {
+                            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/backendAddressPools/BackendPool1')]"
+                        },
+                        "probe": {
+                            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/probes/lbprobeForT3Channel')]"
+                        },
+                        "protocol": "Tcp",
+                        "frontendPort": "[variables('loadBalancerFrontEndChannelPort')]",
+                        "backendPort": "[variables('loadBalancerFrontEndChannelPort')]",
+                        "idleTimeoutInMinutes": 15,
+                        "loadDistribution": "SourceIP"
+                    },
+                    "Name": "lbruleForT3Channel"
                 }],
                 "probes": [{
                     "properties": {
                         "protocol": "Tcp",
-                        "port": 8001,
+                        "port": "[variables('loadBalancerFrontEndDefaultPort')]",
                         "intervalInSeconds": 15,
                         "numberOfProbes": 2
                     },
                     "name": "lbprobe"
+                },
+                {
+                    "properties": {
+                        "protocol": "Tcp",
+                        "port": "[variables('loadBalancerFrontEndChannelPort')]",
+                        "intervalInSeconds": 15,
+                        "numberOfProbes": 2
+                    },
+                    "name": "lbprobeForT3Channel"
                 }]
             }
         },
@@ -476,7 +506,7 @@
                     "fileUris": [
                         "https://raw.githubusercontent.com/wls-eng/arm-oraclelinux-wls-cluster-with-loadbalancer/develop/setupClusterDomain.sh"
                     ],
-                    "commandToExecute": "[concat('sh setupClusterDomain.sh',' ',parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('wlsDomainName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ','admin',' ',variables('adminVMName'))]"
+                    "commandToExecute": "[concat('sh setupClusterDomain.sh',' ',parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('wlsDomainName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ','admin',' ',variables('adminVMName'),' ',reference(parameters('LBPublicIPAddressName')).dnsSettings.fqdn)]"
                 }
             }
         },
@@ -502,7 +532,7 @@
                     "fileUris": [
                         "https://raw.githubusercontent.com/wls-eng/arm-oraclelinux-wls-cluster-with-loadbalancer/develop/setupClusterDomain.sh"
                     ],
-                    "commandToExecute": "[concat('sh setupClusterDomain.sh',' ',parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('wlsDomainName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',concat(parameters('managedServerPrefix'),copyIndex()),' ',variables('adminVMName'))]"
+                    "commandToExecute": "[concat('sh setupClusterDomain.sh',' ',parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('wlsDomainName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',concat(parameters('managedServerPrefix'),copyIndex()),' ',variables('adminVMName'),' ',reference(parameters('LBPublicIPAddressName')).dnsSettings.fqdn)]"
                 }
             }
         }
@@ -530,4 +560,3 @@
         }
     }
 }
-
