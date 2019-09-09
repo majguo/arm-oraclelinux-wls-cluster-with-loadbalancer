@@ -406,10 +406,17 @@ topology:
            Machine: "$nmHost"
            NetworkAccessPoint:
                 T3Channel:
+                    Protocol: "t3"
                     ListenAddress: None
-                    ListenPort: $T3ChannelPort
+                    ListenPort: $channelPort
                     PublicAddress: "$LBHostName"
-                    PublicPort: $T3ChannelPort
+                    PublicPort: $channelPort
+                HTTPChannel:
+                    Protocol: "http"
+                    ListenAddress: None
+                    ListenPort: $channelPort
+                    PublicAddress: "$LBHostName"
+                    PublicPort: $channelPort
    SecurityConfiguration:
        NodeManagerUsername: "$wlsUserName"
        NodeManagerPasswordEncrypted: "$wlsPassword"
@@ -471,7 +478,7 @@ EOF
 
 
 #This function to add machine for a given managed server
-function createT3ChannelPortOnManagedServer()
+function createChannelPortsOnManagedServer()
 {
     echo "Creating T3 channel Port on managed server $wlsServerName"
     cat <<EOF >$DOMAIN_PATH/create-t3-channel.py
@@ -485,9 +492,19 @@ create('T3Channel','NetworkAccessPoint')
 cd('/Servers/$wlsServerName/NetworkAccessPoints/T3Channel')
 set('Protocol','t3')
 set('ListenAddress','')
-set('ListenPort',$T3ChannelPort)
+set('ListenPort',$channelPort)
 set('PublicAddress', '$LBHostName')
-set('PublicPort', $T3ChannelPort)
+set('PublicPort', $channelPort)
+set('Enabled','true')
+
+cd('/Servers/$wlsServerName')
+create('HTTPChannel','NetworkAccessPoint')
+cd('/Servers/$wlsServerName/NetworkAccessPoints/HTTPChannel')
+set('Protocol','http')
+set('ListenAddress','')
+set('ListenPort',$channelPort)
+set('PublicAddress', '$LBHostName')
+set('PublicPort', $channelPort)
 set('Enabled','true')
 
 save()
@@ -654,7 +671,7 @@ function create_managedSetup(){
     create_managed_model
     create_machine_model
     create_ms_server_model
-    createT3ChannelPortOnManagedServer
+    createChannelPortsOnManagedServer
     
     echo "Completed managed server model files"
     sudo chown -R $username:$groupname $DOMAIN_PATH
@@ -773,7 +790,7 @@ validateInput
 export wlsAdminPort=7001
 export wlsSSLAdminPort=7002
 export wlsManagedPort=8001
-export T3ChannelPort=8501
+export channelPort=8501
 export wlsAdminURL="t3://$wlsAdminHost:$wlsAdminPort"
 export wlsAdminHttpURL="http://$wlsAdminHost:$wlsAdminPort"
 export wlsClusterName="cluster1"
